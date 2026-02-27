@@ -3,7 +3,6 @@ import zipfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
-from tkinter import Tk, filedialog
 
 import traceback
 
@@ -54,7 +53,10 @@ def process_folder(
     zip_file_path = generate_unique_zip_path(directory_path, folder_name)
 
     if zip_folder(folder_path, zip_file_path):
-        delete_folder(folder_path)
+        if not delete_folder(folder_path):
+            log_message(
+                f"'{folder_name}'フォルダの削除に失敗しました。", level="WARNING"
+            )
 
     progress_queue.put(1)  # 進捗を通知
     completed = progress_queue.qsize()
@@ -97,16 +99,13 @@ def zip_folders_in_directory(directory_path: str):
     log_message("...complete !!")
 
 
-def select_directory():
-    root = Tk()
-    root.withdraw()
-    directory_path = filedialog.askdirectory(title="フォルダを選択")
-
-    if directory_path:
-        zip_folders_in_directory(directory_path)
-    else:
-        log_message("ディレクトリが選択されませんでした。", level="INFO")
-
-
 if __name__ == "__main__":
-    select_directory()
+    target_directory = "/volume2/Public/jobs/PyZipper"
+
+    if os.path.exists(target_directory) and os.path.isdir(target_directory):
+        zip_folders_in_directory(target_directory)
+    else:
+        log_message(
+            f"指定されたディレクトリ '{target_directory}' が存在しないか、ディレクトリではありません。",
+            level="ERROR",
+        )
