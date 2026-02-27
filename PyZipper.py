@@ -2,19 +2,20 @@ import os
 import zipfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-from tkinter import Tk
-from tkinter.filedialog import askdirectory
+from queue import Queue
+from tkinter import Tk, filedialog
+
 import traceback
-import queue
 
 
 def log_message(message: str, level="INFO"):
+    formatted_message = f"{level}: {message}"
     with open("process_log.txt", "a", encoding="utf-8") as log_file:
-        log_file.write(f"{level}: {message}\n")
-    print(message)
+        log_file.write(formatted_message + "\n")
+    print(formatted_message)
 
 
-def zip_folder(folder_path: str, zip_file_path: str):
+def zip_folder(folder_path: str, zip_file_path: str) -> bool:
     try:
         with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, _, files in os.walk(folder_path):
@@ -24,35 +25,36 @@ def zip_folder(folder_path: str, zip_file_path: str):
                     zipf.write(file_path, arcname)
         return True
     except Exception as e:
-        error_message = f"圧縮中にエラーが発生しました: {e}\n{traceback.format_exc()}"
-        log_message(error_message, level="ERROR")
+        log_message(
+            f"圧縮中にエラーが発生しました: {e}\n{traceback.format_exc()}",
+            level="ERROR",
+        )
         return False
 
 
-def delete_folder(folder_path: str):
+def delete_folder(folder_path: str) -> bool:
     try:
         shutil.rmtree(folder_path)
         return True
     except Exception as e:
-        error_message = f"フォルダ '{os.path.basename(folder_path)}' の削除中にエラーが発生しました: {e}\n{traceback.format_exc()}"
-        log_message(error_message, level="ERROR")
+        log_message(
+            f"フォルダ '{os.path.basename(folder_path)}' の削除中にエラーが発生しました: {e}\n{traceback.format_exc()}",
+            level="ERROR",
+        )
         return False
 
 
 def process_folder(
     directory_path: str,
     folder_name: str,
-    progress_queue: queue.Queue,
+    progress_queue: Queue,
     total_folders: int,
 ):
     folder_path = os.path.join(directory_path, folder_name)
     zip_file_path = generate_unique_zip_path(directory_path, folder_name)
 
     if zip_folder(folder_path, zip_file_path):
-        if not delete_folder(folder_path):
-            log_message(
-                f"'{folder_name}'フォルダの削除に失敗しました。", level="WARNING"
-            )
+        delete_folder(folder_path)
 
     progress_queue.put(1)  # 進捗を通知
     completed = progress_queue.qsize()
@@ -60,10 +62,10 @@ def process_folder(
 
     # 進捗の出力
     progress_message = f"フォルダ圧縮中 {completed} / {total_folders} ({percent:.1f}%) "
-    log_message(progress_message)  # ログにも書き込む
+    log_message(progress_message)
 
 
-def generate_unique_zip_path(directory_path: str, folder_name: str):
+def generate_unique_zip_path(directory_path: str, folder_name: str) -> str:
     base_zip_file_path = os.path.join(directory_path, f"{folder_name}.zip")
     count = 1
     while os.path.exists(base_zip_file_path):
@@ -75,16 +77,16 @@ def generate_unique_zip_path(directory_path: str, folder_name: str):
 def zip_folders_in_directory(directory_path: str):
     folder_names = sorted(
         [
-            folder_name
-            for folder_name in os.listdir(directory_path)
-            if os.path.isdir(os.path.join(directory_path, folder_name))
+            name
+            for name in os.listdir(directory_path)
+            if os.path.isdir(os.path.join(directory_path, name))
         ]
     )
 
     total = len(folder_names)
-    progress_queue = queue.Queue()
+    progress_queue = Queue()
 
-    log_message("start...")  # ログにも出力
+    log_message("start...")
 
     with ThreadPoolExecutor() as executor:
         for folder_name in folder_names:
@@ -92,13 +94,13 @@ def zip_folders_in_directory(directory_path: str):
                 process_folder, directory_path, folder_name, progress_queue, total
             )
 
-    log_message("...complete !!")  # 完了メッセージをログに書き込む
+    log_message("...complete !!")
 
 
 def select_directory():
     root = Tk()
     root.withdraw()
-    directory_path = askdirectory(title="フォルダを選択")
+    directory_path = filedialog.askdirectory(title="フォルダを選択")
 
     if directory_path:
         zip_folders_in_directory(directory_path)
@@ -106,4 +108,5 @@ def select_directory():
         log_message("ディレクトリが選択されませんでした。", level="INFO")
 
 
-select_directory()
+if __name__ == "__main__":
+    select_directory()
