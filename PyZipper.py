@@ -10,7 +10,7 @@ import traceback
 
 def log_message(message: str, level="INFO"):
     formatted_message = f"{level}: {message}"
-    with open("process_log.txt", "a", encoding="utf-8") as log_file:
+    with open("process_log.txt", "a", encoding="shift_jis") as log_file:
         log_file.write(formatted_message + "\n")
     print(formatted_message)
 
