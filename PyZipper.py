@@ -2,15 +2,14 @@ import os
 import zipfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-
+import json
 import traceback
 
 
 def log_message(message: str, level="INFO"):
-    formatted_message = f"{level}: {message}"
-    with open("process_log.txt", "a", encoding="shift_jis") as log_file:
-        log_file.write(formatted_message + "\n")
-    print(formatted_message)
+    with open("process_log.txt", "a", encoding="shift-jis") as log_file:
+        log_file.write(f"{level}: {message}\n")
+    print(message)
 
 
 def zip_folder(folder_path: str, zip_file_path: str) -> bool:
@@ -38,53 +37,44 @@ def delete_folder(folder_path: str) -> bool:
         return False
 
 
-def process_folder(directory_path: str, folder_name: str):
-    folder_path = os.path.join(directory_path, folder_name)
-    zip_file_path = generate_unique_zip_path(directory_path, folder_name)
-
+def process_folder(folder_path: str, zip_file_path: str):
     if zip_folder(folder_path, zip_file_path):
         if not delete_folder(folder_path):
             log_message(
-                f"'{folder_name}' フォルダの削除に失敗しました。", level="WARNING"
+                f"'{os.path.basename(folder_path)}' フォルダの削除に失敗しました。",
+                level="WARNING",
             )
 
-    log_message(f"'{folder_name}' フォルダを処理完了")
+    log_message(f"'{os.path.basename(folder_path)}' フォルダを処理完了")
 
 
-def generate_unique_zip_path(directory_path: str, folder_name: str) -> str:
-    base_zip_file_path = os.path.join(directory_path, f"{folder_name}.zip")
-    count = 1
-    while os.path.exists(base_zip_file_path):
-        base_zip_file_path = os.path.join(directory_path, f"{folder_name}_{count}.zip")
-        count += 1
-    return base_zip_file_path
+def zip_folders_from_config(config_file: str):
+    if not os.path.exists(config_file):
+        log_message(f"設定ファイル '{config_file}' が存在しません。", level="ERROR")
+        return
 
-
-def zip_folders_in_directory(directory_path: str):
-    folder_names = sorted(
-        [
-            name
-            for name in os.listdir(directory_path)
-            if os.path.isdir(os.path.join(directory_path, name))
-        ]
-    )
+    with open(config_file, "r", encoding="utf-8") as f:
+        folder_pairs = json.load(f)
 
     log_message("start...")
 
     with ThreadPoolExecutor() as executor:
-        for folder_name in folder_names:
-            executor.submit(process_folder, directory_path, folder_name)
+        for folder_path, zip_file_path in folder_pairs:
+            if not os.path.isdir(folder_path):
+                log_message(
+                    f"読み込み対象フォルダ '{folder_path}' が存在しません。",
+                    level="ERROR",
+                )
+                continue
+
+            executor.submit(process_folder, folder_path, zip_file_path)
 
     log_message("...complete !!")
 
 
 if __name__ == "__main__":
-    target_directory = "/volume2/Public/jobs/PyZipper"
-
-    if os.path.exists(target_directory) and os.path.isdir(target_directory):
-        zip_folders_in_directory(target_directory)
+    config_file = "config.json"  # 自動的に読み取る設定ファイル名
+    if os.path.exists(config_file):
+        zip_folders_from_config(config_file)
     else:
-        log_message(
-            f"指定されたディレクトリ '{target_directory}' が存在しないか、ディレクトリではありません。",
-            level="ERROR",
-        )
+        log_message(f"設定ファイル '{config_file}' が存在しません。", level="ERROR")
