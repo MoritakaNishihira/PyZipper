@@ -2,7 +2,6 @@ import os
 import zipfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
 
 import traceback
 
@@ -24,10 +23,8 @@ def zip_folder(folder_path: str, zip_file_path: str) -> bool:
                     zipf.write(file_path, arcname)
         return True
     except Exception as e:
-        log_message(
-            f"圧縮中にエラーが発生しました: {e}\n{traceback.format_exc()}",
-            level="ERROR",
-        )
+        error_message = f"圧縮中にエラーが発生しました: {e}\n{traceback.format_exc()}"
+        log_message(error_message, level="ERROR")
         return False
 
 
@@ -36,35 +33,22 @@ def delete_folder(folder_path: str) -> bool:
         shutil.rmtree(folder_path)
         return True
     except Exception as e:
-        log_message(
-            f"フォルダ '{os.path.basename(folder_path)}' の削除中にエラーが発生しました: {e}\n{traceback.format_exc()}",
-            level="ERROR",
-        )
+        error_message = f"フォルダ '{os.path.basename(folder_path)}' の削除中にエラーが発生しました: {e}\n{traceback.format_exc()}"
+        log_message(error_message, level="ERROR")
         return False
 
 
-def process_folder(
-    directory_path: str,
-    folder_name: str,
-    progress_queue: Queue,
-    total_folders: int,
-):
+def process_folder(directory_path: str, folder_name: str):
     folder_path = os.path.join(directory_path, folder_name)
     zip_file_path = generate_unique_zip_path(directory_path, folder_name)
 
     if zip_folder(folder_path, zip_file_path):
         if not delete_folder(folder_path):
             log_message(
-                f"'{folder_name}'フォルダの削除に失敗しました。", level="WARNING"
+                f"'{folder_name}' フォルダの削除に失敗しました。", level="WARNING"
             )
 
-    progress_queue.put(1)  # 進捗を通知
-    completed = progress_queue.qsize()
-    percent = (completed / total_folders) * 100
-
-    # 進捗の出力
-    progress_message = f"フォルダ圧縮中 {completed} / {total_folders} ({percent:.1f}%) "
-    log_message(progress_message)
+    log_message(f"'{folder_name}' フォルダを処理完了")
 
 
 def generate_unique_zip_path(directory_path: str, folder_name: str) -> str:
@@ -85,16 +69,11 @@ def zip_folders_in_directory(directory_path: str):
         ]
     )
 
-    total = len(folder_names)
-    progress_queue = Queue()
-
     log_message("start...")
 
     with ThreadPoolExecutor() as executor:
         for folder_name in folder_names:
-            executor.submit(
-                process_folder, directory_path, folder_name, progress_queue, total
-            )
+            executor.submit(process_folder, directory_path, folder_name)
 
     log_message("...complete !!")
 
