@@ -111,30 +111,30 @@ class FolderSelectorApp:
 
         for idx, setting in enumerate(self.settings):
             frame = tk.Frame(self.listbox_frame, borderwidth=1, relief="solid")
-            frame.grid(row=idx + 2, columnspan=len(self.labels) + 1)
+            frame.grid(row=idx + 2, columnspan=8)
 
             tk.Label(frame, text=setting["name"], width=30).grid(row=0, column=1)
 
-            source_icon_path = os.path.join("icon", "folder_icon.png")
-            source_icon_image = tk.PhotoImage(file=source_icon_path)
-            source_icon_label = tk.Label(frame, image=source_icon_image)
-            source_icon_label.image = source_icon_image
-            source_icon_label.grid(row=0, column=2)
+            # フォルダアイコンの表示を削除
+            # source_icon_image = self.get_folder_icon()
+            # source_icon_label = tk.Label(frame, image=source_icon_image)
+            # source_icon_label.image = source_icon_image
+            # source_icon_label.grid(row=0, column=2)
 
-            tk.Label(frame, text=setting["source"], width=30).grid(row=0, column=3)
+            tk.Label(frame, text=setting["source"], width=30).grid(row=0, column=2)
 
-            destination_icon_path = os.path.join("icon", "folder_icon.png")
-            destination_icon_image = tk.PhotoImage(file=destination_icon_path)
-            destination_icon_label = tk.Label(frame, image=destination_icon_image)
-            destination_icon_label.image = destination_icon_image
-            destination_icon_label.grid(row=0, column=4)
+            # フォルダアイコンの表示を削除
+            # destination_icon_image = self.get_folder_icon()
+            # destination_icon_label = tk.Label(frame, image=destination_icon_image)
+            # destination_icon_label.image = destination_icon_image
+            # destination_icon_label.grid(row=0, column=3)
 
-            tk.Label(frame, text=setting["destination"], width=30).grid(row=0, column=5)
+            tk.Label(frame, text=setting["destination"], width=30).grid(row=0, column=3)
 
             delete_button = tk.Button(
                 frame, text="❌", command=lambda idx=idx: self.delete_setting(idx)
             )
-            delete_button.grid(row=0, column=6)
+            delete_button.grid(row=0, column=4)
 
     def delete_setting(self, index):
         response = messagebox.askyesno("確認", "この設定を削除しますか？")
