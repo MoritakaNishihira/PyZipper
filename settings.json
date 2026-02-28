@@ -1,7 +1,7 @@
 [
     {
-        "name": "asdfasdfasdf",
-        "source": "asdfasdf",
-        "destination": "asdfasdf"
+        "設定名": "aaaaaavvvvv11111",
+        "参照先": "//192.168.0.50/docker/python/PyZipper/.vscode",
+        "保存先": "//192.168.0.50/docker/python"
     }
 ]
