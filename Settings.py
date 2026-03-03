@@ -22,7 +22,6 @@ class MainWindow(QMainWindow):
         # QTableWidget を作成し、列数と行数を設定
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        # self.table.setRowCount(5)
 
         # 各列の横幅を設定
         column_widths = [200, 250, 250, 60]
@@ -60,15 +59,20 @@ class MainWindow(QMainWindow):
         for col in range(
             self.table.columnCount() - 1
         ):  # 最終列（「保存」）は特別な扱いが必要
-            item = QTableWidgetItem(f"データ {row},{col}")
+            item = QTableWidgetItem(f"sample")
 
-            if col == 1 or col == 2:  # 「参照先」と「保存先」の列にはボタンを追加
+            if col == 0:  # 「設定名」の列にはQLineEditを使用し、編集可にする
+                input_area = QLineEdit()
+                input_area.setText(item.text())
+                self.table.setCellWidget(row, col, input_area)
+            elif col in (1, 2):  # 「参照先」と「保存先」の列にはボタンを追加
                 container = QWidget()
                 layout = QHBoxLayout(container)
 
                 # 入力エリア
                 input_area = QLineEdit()
                 input_area.setText(item.text())
+                input_area.setReadOnly(True)  # 参照先と保存先は読み取り専用に設定
                 layout.addWidget(input_area)
 
                 # 参照ボタン
