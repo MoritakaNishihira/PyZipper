@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("設定")
-        self.setGeometry(100, 100, 810, 600)
+        self.setGeometry(100, 100, 800, 600)
 
         self.table = QTableWidget()
         self.setup_table()
