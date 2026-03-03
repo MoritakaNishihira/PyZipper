@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
 )
+from PySide6.QtCore import Qt
 
 
 class MainWindow(QMainWindow):
@@ -34,38 +35,7 @@ class MainWindow(QMainWindow):
 
         # テーブルにデータとボタンを入力
         for row in range(self.table.rowCount()):
-            for col in range(
-                self.table.columnCount() - 1
-            ):  # 最終列（「保存」）は特別な扱いが必要
-                item = QTableWidgetItem(f"データ {row},{col}")
-
-                if col == 1 or col == 2:  # 「参照先」と「保存先」の列にはボタンを追加
-                    container = QWidget()
-                    layout = QHBoxLayout(container)
-
-                    # 入力エリア
-                    input_area = QLineEdit()
-                    input_area.setText(item.text())
-                    layout.addWidget(input_area)
-
-                    # 参照ボタン
-                    reference_button = QPushButton("参照")
-                    reference_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
-                    layout.addWidget(reference_button)
-                    layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
-
-                    self.table.setCellWidget(
-                        row, col, container
-                    )  # セルにコンテナを配置
-                else:
-                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                    self.table.setItem(row, col, item)
-
-            # 「保存」ボタンを追加
-            save_button = QPushButton("保存")
-            self.table.setCellWidget(
-                row, 3, save_button
-            )  # 最終列（「保存」）にボタンを配置
+            self.setup_row(row)
 
         # 追加ボタンの設定
         add_button = QPushButton("追加")
@@ -84,12 +54,13 @@ class MainWindow(QMainWindow):
     def add_row(self):
         current_row_count = self.table.rowCount()
         self.table.insertRow(current_row_count)
+        self.setup_row(current_row_count)
 
-        # 新しい行に初期データを入力
+    def setup_row(self, row):
         for col in range(
             self.table.columnCount() - 1
         ):  # 最終列（「保存」）は特別な扱いが必要
-            item = QTableWidgetItem(f"新しいデータ {current_row_count},{col}")
+            item = QTableWidgetItem(f"データ {row},{col}")
 
             if col == 1 or col == 2:  # 「参照先」と「保存先」の列にはボタンを追加
                 container = QWidget()
@@ -106,24 +77,20 @@ class MainWindow(QMainWindow):
                 layout.addWidget(reference_button)
                 layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
 
-                self.table.setCellWidget(
-                    current_row_count, col, container
-                )  # セルにコンテナを配置
+                self.table.setCellWidget(row, col, container)  # セルにコンテナを配置
             else:
                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                self.table.setItem(current_row_count, col, item)
+                self.table.setItem(row, col, item)
 
         # 「保存」ボタンを追加
         save_button = QPushButton("保存")
         self.table.setCellWidget(
-            current_row_count, 3, save_button
+            row, 3, save_button
         )  # 最終列（「保存」）にボタンを配置
 
 
 # アプリケーションの実行
 if __name__ == "__main__":
-    from PySide6.QtCore import Qt  # Qt モジュールをインポート
-
     app = QApplication([])
     window = MainWindow()
     window.show()
