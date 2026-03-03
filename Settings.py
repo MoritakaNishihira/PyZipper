@@ -16,13 +16,13 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("一覧入力形式の UI")
+        self.setWindowTitle("設定")
         self.setGeometry(100, 100, 800, 600)
 
         # QTableWidget を作成し、列数と行数を設定
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setRowCount(5)
+        # self.table.setRowCount(5)
 
         # 各列の横幅を設定
         column_widths = [200, 250, 250, 60]
@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
             self.table.setColumnWidth(col, column_widths[col])
 
         # 列のヘッダーを設定
-        headers = ["設定名", "参照先", "保存先", "保存"]
+        headers = ["設定名", "参照先", "保存先", ""]
         self.table.setHorizontalHeaderLabels(headers)
 
         # テーブルにデータとボタンを入力
