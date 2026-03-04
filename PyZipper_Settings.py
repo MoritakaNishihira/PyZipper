@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 from PySide6.QtCore import Qt
-import json  # 追加
+import json
 
 
 class MainWindow(QMainWindow):
@@ -35,6 +35,9 @@ class MainWindow(QMainWindow):
         container = QWidget()
         container.setLayout(layout)
         self.setCentralWidget(container)
+
+        # プログラム起動時に JSON 設定ファイルを読み込む
+        self.load_settings_from_json()
 
     def setup_table(self):
         self.table.setColumnCount(4)
@@ -87,8 +90,6 @@ class MainWindow(QMainWindow):
         reference_button = QPushButton("参照")
         reference_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
         layout.addWidget(reference_button)
-        reference_button.clicked.connect(lambda: self.open_folder_dialog(row, col))
-
         layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
 
         self.table.setCellWidget(row, col, container)  # セルにコンテナを配置
@@ -127,9 +128,11 @@ class MainWindow(QMainWindow):
         if not updated:
             settings_data.append(row_data)
 
-        # 更新されたデータを保存
+        # 行番号の昇順でソートして保存
+        sorted_settings_data = sorted(settings_data, key=lambda x: x.get("行番号", 0))
+
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(settings_data, f, ensure_ascii=False, indent=4)
+            json.dump(sorted_settings_data, f, ensure_ascii=False, indent=4)
 
         print(f"データを {file_path} に保存しました。")
 
@@ -145,9 +148,56 @@ class MainWindow(QMainWindow):
         else:
             return ""
 
+    def load_settings_from_json(self):
+        file_path = "PyZipper_Settings.json"
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                settings_data = json.load(f)
+
+            for entry in settings_data:
+                self.add_row()
+                row = entry.get("行番号")
+                if row is not None and 0 <= row < self.table.rowCount():
+                    input_area = QLineEdit(entry["設定名"])
+                    self.table.setCellWidget(row, 0, input_area)
+
+                    container1 = QWidget()
+                    layout1 = QHBoxLayout(container1)
+                    input_area2 = QLineEdit(entry["参照先"])
+                    input_area2.setReadOnly(True)
+                    reference_button = QPushButton("参照")
+                    reference_button.clicked.connect(
+                        lambda _, r=row: self.open_folder_dialog(r, 1)
+                    )
+                    layout1.addWidget(input_area2)
+                    layout1.addWidget(reference_button)
+                    layout1.setContentsMargins(0, 0, 0, 0)
+                    self.table.setCellWidget(row, 1, container1)
+
+                    container2 = QWidget()
+                    layout2 = QHBoxLayout(container2)
+                    input_area3 = QLineEdit(entry["保存先"])
+                    input_area3.setReadOnly(True)
+                    reference_button = QPushButton("参照")
+                    reference_button.clicked.connect(
+                        lambda _, r=row: self.open_folder_dialog(r, 2)
+                    )
+                    layout2.addWidget(input_area3)
+                    layout2.addWidget(reference_button)
+                    layout2.setContentsMargins(0, 0, 0, 0)
+                    self.table.setCellWidget(row, 2, container2)
+
+                    save_button = QPushButton("保存")
+                    save_button.clicked.connect(lambda _, r=row: self.save_row_data(r))
+                    self.table.setCellWidget(row, 3, save_button)
+        except FileNotFoundError:
+            pass
+
 
 # アプリケーションの実行
 if __name__ == "__main__":
+
     app = QApplication([])
     window = MainWindow()
     window.show()
