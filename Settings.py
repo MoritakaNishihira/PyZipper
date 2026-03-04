@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QLineEdit,
+    QFileDialog,  # 追加
 )
 from PySide6.QtCore import Qt
 
@@ -82,9 +83,19 @@ class MainWindow(QMainWindow):
         reference_button = QPushButton("参照")
         reference_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
         layout.addWidget(reference_button)
+        reference_button.clicked.connect(
+            lambda: self.open_folder_dialog(row, col)
+        )  # 追加
+
         layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
 
         self.table.setCellWidget(row, col, container)  # セルにコンテナを配置
+
+    def open_folder_dialog(self, row, col):
+        folder_path = QFileDialog.getExistingDirectory(self, "フォルダを選択")
+        if folder_path:
+            input_area = self.table.cellWidget(row, col).layout().itemAt(0).widget()
+            input_area.setText(folder_path)
 
 
 # アプリケーションの実行
