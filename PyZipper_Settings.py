@@ -89,6 +89,12 @@ class MainWindow(QMainWindow):
 
         reference_button = QPushButton("参照")
         reference_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
+
+        # lambda 関数を使用して正しく行番号 (row) を引数として渡すようにする
+        reference_button.clicked.connect(
+            lambda _, r=row, c=col: self.open_folder_dialog(r, c)
+        )
+
         layout.addWidget(reference_button)
         layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
 
@@ -197,7 +203,6 @@ class MainWindow(QMainWindow):
 
 # アプリケーションの実行
 if __name__ == "__main__":
-
     app = QApplication([])
     window = MainWindow()
     window.show()
