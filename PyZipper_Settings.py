@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 from PySide6.QtCore import Qt
+import json  # 追加
 
 
 class MainWindow(QMainWindow):
@@ -25,7 +26,7 @@ class MainWindow(QMainWindow):
 
         add_button = QPushButton("追加")
         add_button.clicked.connect(self.add_row)
-        add_button.setFixedWidth(60)
+        add_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
 
         layout = QVBoxLayout()
         layout.addWidget(add_button)
@@ -67,6 +68,9 @@ class MainWindow(QMainWindow):
 
         # 「保存」ボタンを追加
         save_button = QPushButton("保存")
+        save_button.clicked.connect(lambda: self.save_row_data(row))  # 追加
+        save_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
+
         self.table.setCellWidget(
             row, 3, save_button
         )  # 最終列（「保存」）にボタンを配置
@@ -83,9 +87,7 @@ class MainWindow(QMainWindow):
         reference_button = QPushButton("参照")
         reference_button.setFixedWidth(60)  # 横幅を60ピクセルに設定
         layout.addWidget(reference_button)
-        reference_button.clicked.connect(
-            lambda: self.open_folder_dialog(row, col)
-        )  # 追加
+        reference_button.clicked.connect(lambda: self.open_folder_dialog(row, col))
 
         layout.setContentsMargins(0, 0, 0, 0)  # レイアウトの余白を除去
 
@@ -96,6 +98,52 @@ class MainWindow(QMainWindow):
         if folder_path:
             input_area = self.table.cellWidget(row, col).layout().itemAt(0).widget()
             input_area.setText(folder_path)
+
+    def save_row_data(self, row):
+        row_data = {
+            "行番号": row,
+            "設定名": self.get_cell_text(row, 0),
+            "参照先": self.get_cell_text(row, 1),
+            "保存先": self.get_cell_text(row, 2),
+        }
+
+        file_path = "PyZipper_Settings.json"
+
+        # JSON ファイルが存在するか確認
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                settings_data = json.load(f)
+        except FileNotFoundError:
+            settings_data = []
+
+        # 行番号で検索してデータを更新または追加
+        updated = False
+        for entry in settings_data:
+            if entry.get("行番号") == row:
+                entry.update(row_data)
+                updated = True
+                break
+
+        if not updated:
+            settings_data.append(row_data)
+
+        # 更新されたデータを保存
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(settings_data, f, ensure_ascii=False, indent=4)
+
+        print(f"データを {file_path} に保存しました。")
+
+    def get_cell_text(self, row, col):
+        widget = self.table.cellWidget(row, col)
+        if isinstance(widget, QLineEdit):
+            return widget.text()
+        elif (
+            isinstance(widget, QWidget)
+            and widget.layout().itemAt(0).widget() is not None
+        ):
+            return widget.layout().itemAt(0).widget().text()
+        else:
+            return ""
 
 
 # アプリケーションの実行
